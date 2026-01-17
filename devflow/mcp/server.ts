@@ -1,0 +1,250 @@
+#!/usr/bin/env node
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+
+const API_BASE = process.env.DEVFLOW_API_URL || "http://localhost:3000";
+
+// MCP Server for DevFlow
+const server = new Server(
+  {
+    name: "devflow-mcp",
+    version: "1.0.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+// Define available tools
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  return {
+    tools: [
+      {
+        name: "report_step_status",
+        description:
+          "Report that a development step is complete or has failed. Call this after completing tasks like running tests, committing code, or creating a PR.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            issueNumber: {
+              type: "number",
+              description: "The GitHub issue number (e.g., 123)",
+            },
+            stepType: {
+              type: "string",
+              enum: [
+                "CODE",
+                "TEST",
+                "RUN_TESTS",
+                "COMMIT",
+                "CREATE_PR",
+                "REQUEST_REVIEW",
+                "ADDRESS_COMMENTS",
+                "GET_APPROVAL",
+                "MERGE",
+                "DEPLOY",
+                "CLOSE_ISSUE",
+              ],
+              description: "The type of step being reported",
+            },
+            status: {
+              type: "string",
+              enum: ["completed", "failed"],
+              description: "Whether the step was completed or failed",
+            },
+            details: {
+              type: "string",
+              description:
+                "Optional details about the completion (e.g., 'All 42 tests passed')",
+            },
+          },
+          required: ["issueNumber", "stepType", "status"],
+        },
+      },
+      {
+        name: "get_issue_steps",
+        description:
+          "Get the list of atomic steps for a GitHub issue and their current status.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            issueNumber: {
+              type: "number",
+              description: "The GitHub issue number",
+            },
+          },
+          required: ["issueNumber"],
+        },
+      },
+      {
+        name: "list_active_issues",
+        description:
+          "List all issues currently in progress with their step status.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+        },
+      },
+    ],
+  };
+});
+
+// Handle tool calls
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  try {
+    switch (name) {
+      case "report_step_status": {
+        const { issueNumber, stepType, status, details } = args as {
+          issueNumber: number;
+          stepType: string;
+          status: "completed" | "failed";
+          details?: string;
+        };
+
+        // Call the DevFlow API to update step status
+        const response = await fetch(`${API_BASE}/api/mcp/report-step`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ issueNumber, stepType, status, details }),
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Failed to report step status: ${error}`,
+              },
+            ],
+          };
+        }
+
+        const result = await response.json();
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Step "${stepType}" marked as ${status} for issue #${issueNumber}. Progress: ${result.progress}%`,
+            },
+          ],
+        };
+      }
+
+      case "get_issue_steps": {
+        const { issueNumber } = args as { issueNumber: number };
+
+        const response = await fetch(
+          `${API_BASE}/api/mcp/issue-steps?issueNumber=${issueNumber}`
+        );
+
+        if (!response.ok) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Failed to get steps for issue #${issueNumber}`,
+              },
+            ],
+          };
+        }
+
+        const data = await response.json();
+        const stepsText = data.steps
+          .map(
+            (step: { name: string; type: string; status: string }, i: number) =>
+              `${i + 1}. [${step.status}] ${step.name} (${step.type})`
+          )
+          .join("\n");
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Issue #${issueNumber}: ${data.title}\nProgress: ${data.progress}%\n\nSteps:\n${stepsText}`,
+            },
+          ],
+        };
+      }
+
+      case "list_active_issues": {
+        const response = await fetch(`${API_BASE}/api/mcp/active-issues`);
+
+        if (!response.ok) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Failed to fetch active issues",
+              },
+            ],
+          };
+        }
+
+        const data = await response.json();
+        if (data.issues.length === 0) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "No active issues found.",
+              },
+            ],
+          };
+        }
+
+        const issuesText = data.issues
+          .map(
+            (issue: { number: number; title: string; progress: number }) =>
+              `#${issue.number}: ${issue.title} (${issue.progress}%)`
+          )
+          .join("\n");
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Active Issues:\n${issuesText}`,
+            },
+          ],
+        };
+      }
+
+      default:
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Unknown tool: ${name}`,
+            },
+          ],
+        };
+    }
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        },
+      ],
+    };
+  }
+});
+
+// Start the server
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("DevFlow MCP server running");
+}
+
+main().catch(console.error);

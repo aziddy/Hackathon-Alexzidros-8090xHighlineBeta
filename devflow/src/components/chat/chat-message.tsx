@@ -12,7 +12,7 @@ export function ChatMessageComponent({ message }: ChatMessageComponentProps) {
   const isUser = message.role === "user";
 
   return (
-    <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
+    <div className={cn("flex gap-3 w-full overflow-hidden", isUser && "flex-row-reverse")}>
       <div
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
@@ -26,10 +26,10 @@ export function ChatMessageComponent({ message }: ChatMessageComponentProps) {
         )}
       </div>
 
-      <div className={cn("flex-1 space-y-1 max-w-[85%]", isUser && "flex flex-col items-end")}>
+      <div className={cn("flex-1 min-w-0 space-y-1 overflow-hidden", isUser && "flex flex-col items-end")}>
         <div
           className={cn(
-            "inline-block px-4 py-2 rounded-lg text-sm whitespace-pre-wrap",
+            "px-4 py-2 rounded-lg text-sm break-all",
             isUser
               ? "bg-blue-600 text-white"
               : "bg-gray-800 text-gray-200 border border-gray-700"

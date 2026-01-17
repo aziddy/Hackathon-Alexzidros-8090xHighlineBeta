@@ -68,6 +68,7 @@ interface StepPreviewItemProps {
 export function StepPreviewItem({ step, isHighlighted }: StepPreviewItemProps) {
   const Icon = ICONS[step.type];
   const isCompleted = step.status === "COMPLETED";
+  const isInProgress = step.status === "IN_PROGRESS";
 
   return (
     <div
@@ -77,6 +78,20 @@ export function StepPreviewItem({ step, isHighlighted }: StepPreviewItemProps) {
         isCompleted && "opacity-60"
       )}
     >
+      {/* Step number */}
+      <span
+        className={cn(
+          "flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold",
+          isCompleted
+            ? "bg-green-900/50 text-green-400"
+            : isInProgress
+            ? "bg-blue-900/50 text-blue-400"
+            : "bg-gray-700/50 text-gray-400"
+        )}
+      >
+        {step.order}
+      </span>
+
       {/* Checkbox indicator */}
       <div
         className={cn(

@@ -131,8 +131,8 @@ export function ChatSidebar({
             onClose={onClose}
           />
 
-          <ScrollArea className="flex-1 min-h-0 p-4">
-            <div ref={scrollRef} className="space-y-4">
+          <ScrollArea className="flex-1 min-h-0 p-4 overflow-hidden">
+            <div ref={scrollRef} className="space-y-4 w-full overflow-hidden">
               {!isLoaded ? (
                 <div className="text-gray-500 text-center py-8">Loading...</div>
               ) : messages.length === 0 ? (

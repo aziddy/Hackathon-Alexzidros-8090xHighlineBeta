@@ -6,7 +6,7 @@
 flowchart LR
     APP[DevFlow App]
     MCP[MCP Server]
-    IDE[VS Code + Claude]
+    IDE[Cursor + LLM]
     GH[GitHub]
 
     APP <-->|Tickets & Steps| MCP
@@ -50,9 +50,9 @@ sequenceDiagram
 
 ## Key Integration Points
 
-| Component | Role | Technology |
-|-----------|------|------------|
-| **DevFlow App** | Visual task management & Kanban | Next.js, React |
-| **MCP Server** | AI-IDE bridge & tool provider | Model Context Protocol |
-| **Claude Code** | AI pair programmer | Claude API |
-| **GitHub** | Source control & issue tracking | GitHub API |
+| Component       | Role                            | Technology             |
+| --------------- | ------------------------------- | ---------------------- |
+| **DevFlow App** | Visual task management & Kanban | Next.js, React         |
+| **MCP Server**  | AI-IDE bridge & tool provider   | Model Context Protocol |
+| **Claude Code** | AI pair programmer              | Claude API             |
+| **GitHub**      | Source control & issue tracking | GitHub API             |

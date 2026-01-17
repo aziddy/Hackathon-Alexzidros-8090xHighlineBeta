@@ -156,80 +156,85 @@ export function WideTicketCard({ issue, onClick }: WideTicketCardProps) {
           </a>
         </div>
 
-        {/* Progress Bar Row */}
-        <div className="flex items-center gap-4 mb-3 pb-3 border-b border-gray-700/50">
-          <div className="flex-1">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-gray-400">Progress</span>
-              <span className="font-medium text-white">{issue.progressPercent}%</span>
-            </div>
-            <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${issue.progressPercent}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                className={cn("h-full rounded-full", getProgressColor(issue.progressPercent))}
-              />
-            </div>
-          </div>
-          <div className="text-xs text-gray-400 flex-shrink-0">
-            {completedCount}/{totalCount} steps
-          </div>
-        </div>
-
-        {/* Atomic Steps Preview */}
-        {totalCount > 0 && (
-          <div className="space-y-1">
-            <div className="text-xs text-gray-500 mb-2">
-              {hasInProgress ? "Current & upcoming steps:" : "Steps:"}
-            </div>
-
-            <AnimatePresence mode="popLayout">
-              {visible.map((step) => (
+        {/* Progress and Steps Container - responsive layout */}
+        <div className="flex flex-col xl:flex-row xl:gap-6">
+          {/* Progress Bar Section */}
+          <div className="flex items-center gap-4 mb-3 pb-3 border-b border-gray-700/50 xl:border-b-0 xl:border-r xl:pr-6 xl:mb-0 xl:pb-0 xl:w-1/3 xl:flex-col xl:items-stretch xl:gap-2">
+            <div className="flex-1 xl:flex-none">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-gray-400">Progress</span>
+                <span className="font-medium text-white">{issue.progressPercent}%</span>
+              </div>
+              <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
                 <motion.div
-                  key={step.id}
-                  layout
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <StepPreviewItem
-                    step={step}
-                    isHighlighted={step.status === "IN_PROGRESS"}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                  initial={{ width: 0 }}
+                  animate={{ width: `${issue.progressPercent}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className={cn("h-full rounded-full", getProgressColor(issue.progressPercent))}
+                />
+              </div>
+            </div>
+            <div className="text-xs text-gray-400 flex-shrink-0">
+              {completedCount}/{totalCount} steps
+            </div>
+          </div>
 
-            {/* Expand/Collapse button */}
-            {(remaining > 0 || expanded) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleExpandClick}
-                className="w-full h-7 text-xs text-gray-400 hover:text-gray-300 hover:bg-gray-700/50 mt-1"
-              >
-                {expanded ? (
-                  <>
-                    <ChevronUp className="h-3 w-3 mr-1" />
-                    Show less
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-3 w-3 mr-1" />
-                    +{remaining} more steps
-                  </>
+          {/* Atomic Steps Preview */}
+          <div className="xl:flex-1">
+            {totalCount > 0 && (
+              <div className="space-y-1">
+                <div className="text-xs text-gray-500 mb-2">
+                  {hasInProgress ? "Current & upcoming steps:" : "Steps:"}
+                </div>
+
+                <AnimatePresence mode="popLayout">
+                  {visible.map((step) => (
+                    <motion.div
+                      key={step.id}
+                      layout
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <StepPreviewItem
+                        step={step}
+                        isHighlighted={step.status === "IN_PROGRESS"}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {/* Expand/Collapse button */}
+                {(remaining > 0 || expanded) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExpandClick}
+                    className="w-full h-7 text-xs text-gray-400 hover:text-gray-300 hover:bg-gray-700/50 mt-1"
+                  >
+                    {expanded ? (
+                      <>
+                        <ChevronUp className="h-3 w-3 mr-1" />
+                        Show less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3 w-3 mr-1" />
+                        +{remaining} more steps
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </div>
+            )}
+
+            {/* No steps message */}
+            {totalCount === 0 && (
+              <div className="text-xs text-gray-500 italic">No atomic steps generated yet</div>
             )}
           </div>
-        )}
-
-        {/* No steps message */}
-        {totalCount === 0 && (
-          <div className="text-xs text-gray-500 italic">No atomic steps generated yet</div>
-        )}
+        </div>
       </Card>
     </motion.div>
   );

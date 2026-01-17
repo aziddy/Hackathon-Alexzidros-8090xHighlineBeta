@@ -26,7 +26,7 @@ export function AtomicStepList({ steps, onStepUpdate, onCheckStatus }: AtomicSte
   const sortedSteps = [...steps].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="space-y-3">
+    <div className="relative">
       <AnimatePresence mode="popLayout">
         {sortedSteps.map((step, index) => (
           <motion.div
@@ -37,6 +37,8 @@ export function AtomicStepList({ steps, onStepUpdate, onCheckStatus }: AtomicSte
           >
             <AtomicStepItem
               step={step}
+              stepNumber={index + 1}
+              isLast={index === sortedSteps.length - 1}
               onToggle={onStepUpdate}
               onCheckStatus={handleCheckStatus}
               isChecking={checkingStepId === step.id}

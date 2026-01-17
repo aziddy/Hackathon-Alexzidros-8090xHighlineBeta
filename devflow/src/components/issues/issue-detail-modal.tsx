@@ -265,7 +265,7 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
           </div>
 
           {/* Right Column: Atomic Steps */}
-          <div className="flex flex-col gap-4 overflow-hidden border-l border-gray-800 pl-6">
+          <div className="flex flex-col gap-4 border-l border-gray-800 pl-6 min-h-0">
             <div className="flex items-center justify-between flex-shrink-0">
               <h3 className="text-lg font-semibold text-white">Atomic Steps</h3>
               {steps.length === 0 ? (
@@ -294,13 +294,13 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
               )}
             </div>
 
-            <ScrollArea className="flex-1">
+            <div className="flex-1 overflow-y-auto pr-2">
               <AtomicStepList
                 steps={steps}
                 onStepUpdate={handleStepUpdate}
                 onCheckStatus={handleCheckStatus}
               />
-            </ScrollArea>
+            </div>
           </div>
         </div>
       </DialogContent>

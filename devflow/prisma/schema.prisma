@@ -133,6 +133,7 @@ enum IssueStatus {
 }
 
 enum StepType {
+  CREATE_BRANCH
   CODE
   TEST
   RUN_TESTS

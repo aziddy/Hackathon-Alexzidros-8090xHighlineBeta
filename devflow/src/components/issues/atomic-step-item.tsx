@@ -10,6 +10,7 @@ import {
   Play,
   GitCommit,
   GitPullRequest,
+  GitBranch,
   Users,
   MessageSquare,
   CheckCircle,
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 
 const ICONS: Record<StepType, React.ElementType> = {
+  CREATE_BRANCH: GitBranch,
   CODE: Code,
   TEST: FlaskConical,
   RUN_TESTS: Play,
@@ -46,6 +48,7 @@ const STATUS_COLORS: Record<StepStatus, string> = {
 };
 
 const TYPE_COLORS: Record<StepType, string> = {
+  CREATE_BRANCH: "bg-teal-600",
   CODE: "bg-blue-600",
   TEST: "bg-emerald-500",
   RUN_TESTS: "bg-green-700",

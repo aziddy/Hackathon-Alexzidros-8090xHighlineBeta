@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "build:mcp": "tsc mcp/server.ts --outDir mcp/dist --esModuleInterop --module NodeNext --moduleResolution NodeNext"
+    "build:mcp": "tsc mcp/server.ts --outDir mcp/dist --esModuleInterop --module NodeNext --moduleResolution NodeNext --skipLibCheck"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

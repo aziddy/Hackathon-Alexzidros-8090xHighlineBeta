@@ -1,6 +1,7 @@
 export type IssueStatus = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
 
 export type StepType =
+  | "CREATE_BRANCH"
   | "CODE"
   | "TEST"
   | "RUN_TESTS"
@@ -65,6 +66,7 @@ export interface KanbanColumn {
 
 // Step type configuration
 export const STEP_CONFIG: Record<StepType, { label: string; icon: string; color: string }> = {
+  CREATE_BRANCH: { label: "Create Branch", icon: "GitBranch", color: "teal" },
   CODE: { label: "Write Code", icon: "Code", color: "blue" },
   TEST: { label: "Write Tests", icon: "FlaskConical", color: "purple" },
   RUN_TESTS: { label: "Run Tests", icon: "Play", color: "green" },

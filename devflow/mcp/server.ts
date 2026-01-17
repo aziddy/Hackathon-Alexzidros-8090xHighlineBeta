@@ -39,6 +39,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             stepType: {
               type: "string",
               enum: [
+                "CREATE_BRANCH",
                 "CODE",
                 "TEST",
                 "RUN_TESTS",
@@ -89,6 +90,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         inputSchema: {
           type: "object",
           properties: {},
+        },
+      },
+      {
+        name: "create_feature_branch",
+        description:
+          "Get instructions for creating a feature branch for a GitHub issue. Returns the suggested branch name and git commands to execute. The user should confirm the branch name before proceeding.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            issueNumber: {
+              type: "number",
+              description: "The GitHub issue number to create a branch for",
+            },
+          },
+          required: ["issueNumber"],
         },
       },
     ],
@@ -213,6 +229,67 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: "text",
               text: `Active Issues:\n${issuesText}`,
+            },
+          ],
+        };
+      }
+
+      case "create_feature_branch": {
+        const { issueNumber } = args as { issueNumber: number };
+
+        // Get branch suggestion from API
+        const response = await fetch(
+          `${API_BASE}/api/mcp/suggest-branch?issueNumber=${issueNumber}`
+        );
+
+        if (!response.ok) {
+          const error = await response.text();
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Failed to get branch suggestion: ${error}`,
+              },
+            ],
+          };
+        }
+
+        const data = await response.json();
+
+        const instructions = `## Create Feature Branch for Issue #${data.issueNumber}
+
+**Issue:** ${data.issueTitle}
+
+**Suggested Branch Name:** \`${data.suggestedBranch}\`
+
+### Instructions:
+Please confirm you want to create this branch, then execute these commands:
+
+\`\`\`bash
+# Ensure you're on the latest main branch
+git checkout ${data.baseBranch}
+git pull origin ${data.baseBranch}
+
+# Create and checkout the new branch
+git checkout -b ${data.suggestedBranch}
+
+# Push the branch to remote
+git push -u origin ${data.suggestedBranch}
+\`\`\`
+
+After creating the branch, use \`report_step_status\` with:
+- issueNumber: ${data.issueNumber}
+- stepType: "CREATE_BRANCH"
+- status: "completed"
+- details: "Created branch ${data.suggestedBranch}"
+
+Would you like me to proceed with creating this branch?`;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: instructions,
             },
           ],
         };

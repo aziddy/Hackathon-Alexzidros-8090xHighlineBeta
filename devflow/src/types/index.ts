@@ -129,9 +129,41 @@ export interface ChatMessage {
     stepName: string;
     executed: boolean;
   };
+  githubAction?: GitHubAction;
 }
 
 export interface ChatStorage {
   version: number;
   chats: Record<string, ChatMessage[]>;
+}
+
+// GitHub Action Types for AI Chat
+export type GitHubActionType =
+  | "CREATE_ISSUE"
+  | "ADD_COMMENT"
+  | "CREATE_BRANCH"
+  | "LIST_REPOS"
+  | "LIST_ISSUES"
+  | "LIST_PRS"
+  | "CHECK_WORKFLOW";
+
+export interface GitHubActionPayload {
+  type: GitHubActionType;
+  params: Record<string, unknown>;
+  requiresConfirmation: boolean;
+}
+
+export interface GitHubActionResult {
+  success: boolean;
+  message: string;
+  data?: Record<string, unknown>;
+  error?: string;
+}
+
+export interface GitHubAction {
+  type: GitHubActionType;
+  params: Record<string, unknown>;
+  executed: boolean;
+  result?: GitHubActionResult;
+  pendingConfirmation?: boolean;
 }

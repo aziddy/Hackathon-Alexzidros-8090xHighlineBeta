@@ -200,6 +200,7 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
           <ChatSidebar
             isOpen={isChatOpen}
             issue={issue}
+            projectId={issue.projectId}
             steps={steps}
             progress={progress}
             onStepUpdate={handleStepUpdate}

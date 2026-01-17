@@ -1,0 +1,1 @@
+Use devflow-mcp to get issue details for the one provided by the user

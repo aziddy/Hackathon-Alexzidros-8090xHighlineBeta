@@ -6,6 +6,7 @@ import { AtomicStep, StepType, StepStatus, CheckMethod, STEP_CONFIG, CHECK_METHO
 import { Badge } from "@/components/ui/badge";
 import { CheckOptionsPopover } from "./check-options-popover";
 import { ManualConfirmDialog } from "./manual-confirm-dialog";
+import { RevertStepDialog } from "./revert-step-dialog";
 import {
   Dialog,
   DialogContent,
@@ -93,6 +94,7 @@ export function AtomicStepItem({
 }: AtomicStepItemProps) {
   const [showManualConfirm, setShowManualConfirm] = useState(false);
   const [showMcpInfo, setShowMcpInfo] = useState(false);
+  const [showRevertConfirm, setShowRevertConfirm] = useState(false);
 
   const Icon = ICONS[step.type];
   const config = STEP_CONFIG[step.type];
@@ -100,8 +102,17 @@ export function AtomicStepItem({
   const isInProgress = step.status === "IN_PROGRESS";
 
   const handleToggle = () => {
-    const newStatus: StepStatus = isCompleted ? "PENDING" : "COMPLETED";
-    onToggle(step.id, newStatus);
+    if (isCompleted) {
+      // Show confirmation dialog before reverting
+      setShowRevertConfirm(true);
+    } else {
+      onToggle(step.id, "COMPLETED");
+    }
+  };
+
+  const confirmRevert = () => {
+    onToggle(step.id, "PENDING");
+    setShowRevertConfirm(false);
   };
 
   const handleApiCheck = () => onCheckStatus(step.id, "api_check");
@@ -286,6 +297,15 @@ export function AtomicStepItem({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Revert Step Confirmation Dialog */}
+      <RevertStepDialog
+        open={showRevertConfirm}
+        onClose={() => setShowRevertConfirm(false)}
+        onConfirm={confirmRevert}
+        stepName={step.name}
+        stepDescription={step.description}
+      />
     </>
   );
 }

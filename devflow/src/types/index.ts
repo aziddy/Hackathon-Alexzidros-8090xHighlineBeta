@@ -114,3 +114,24 @@ export const STEP_CONFIG: Record<StepType, { label: string; icon: string; color:
   CLOSE_ISSUE: { label: "Close Issue", icon: "CheckSquare", color: "green" },
   CUSTOM: { label: "Custom", icon: "Circle", color: "gray" },
 };
+
+// Chat types
+export type ChatRole = "user" | "assistant";
+
+export interface ChatMessage {
+  id: string;
+  role: ChatRole;
+  content: string;
+  timestamp: string;
+  action?: {
+    type: "mark_step_complete";
+    stepId: string;
+    stepName: string;
+    executed: boolean;
+  };
+}
+
+export interface ChatStorage {
+  version: number;
+  chats: Record<string, ChatMessage[]>;
+}

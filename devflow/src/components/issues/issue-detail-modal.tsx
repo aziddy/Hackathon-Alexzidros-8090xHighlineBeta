@@ -21,8 +21,11 @@ import {
   GitPullRequest,
   Loader2,
   CheckCircle2,
+  MessageSquare,
 } from "lucide-react";
 import confetti from "canvas-confetti";
+import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { cn } from "@/lib/utils";
 
 interface IssueDetailModalProps {
   issue: Issue | null;
@@ -35,6 +38,7 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
   const [isGenerating, setIsGenerating] = useState(false);
   const [steps, setSteps] = useState<AtomicStep[]>([]);
   const [progress, setProgress] = useState(0);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
     if (issue) {
@@ -190,7 +194,23 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="w-[98vw] max-w-[98vw] h-[95vh] max-h-[95vh] bg-gray-900 border-gray-700 flex flex-col overflow-hidden p-0">
+      <DialogContent className="w-[98vw] max-w-[98vw] h-[95vh] max-h-[95vh] bg-gray-900 border-gray-700 overflow-hidden p-0 flex flex-col">
+        <div className="relative flex-1 flex min-h-0">
+          {/* Chat Sidebar */}
+          <ChatSidebar
+            isOpen={isChatOpen}
+            issue={issue}
+            steps={steps}
+            progress={progress}
+            onStepUpdate={handleStepUpdate}
+            onClose={() => setIsChatOpen(false)}
+          />
+
+          {/* Main Content */}
+          <div className={cn(
+            "flex-1 flex flex-col overflow-hidden transition-all duration-300",
+            isChatOpen && "ml-80"
+          )}>
         {/* Header */}
         <div className="p-6 pb-4 border-b border-gray-800">
           <DialogHeader>
@@ -212,6 +232,18 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
                     View on GitHub
                     <ExternalLink className="h-3 w-3" />
                   </a>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    className={cn(
+                      "ml-2 border-gray-600 text-gray-300 hover:bg-gray-800",
+                      isChatOpen && "bg-purple-600 border-purple-500 text-white hover:bg-purple-500"
+                    )}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    Chat
+                  </Button>
                 </div>
               </div>
             </div>
@@ -329,6 +361,8 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
               />
             </div>
           </div>
+        </div>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

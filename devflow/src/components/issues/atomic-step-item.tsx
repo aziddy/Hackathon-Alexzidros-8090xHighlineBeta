@@ -45,6 +45,21 @@ const STATUS_COLORS: Record<StepStatus, string> = {
   SKIPPED: "bg-gray-800 text-gray-500",
 };
 
+const TYPE_COLORS: Record<StepType, string> = {
+  CODE: "bg-blue-600",
+  TEST: "bg-emerald-500",
+  RUN_TESTS: "bg-green-700",
+  COMMIT: "bg-purple-400",
+  CREATE_PR: "bg-purple-700",
+  REQUEST_REVIEW: "bg-gradient-to-r from-purple-500 to-orange-500",
+  ADDRESS_COMMENTS: "bg-gradient-to-r from-purple-500 to-blue-500",
+  GET_APPROVAL: "bg-gradient-to-r from-purple-500 to-green-500",
+  MERGE: "bg-blue-500",
+  DEPLOY: "bg-orange-500",
+  CLOSE_ISSUE: "bg-green-500",
+  CUSTOM: "bg-gray-600",
+};
+
 interface AtomicStepItemProps {
   step: AtomicStep;
   onToggle: (stepId: string, status: StepStatus) => void;
@@ -96,10 +111,10 @@ export function AtomicStepItem({ step, onToggle, onCheckStatus, isChecking }: At
       {/* Icon */}
       <div
         className={`flex-shrink-0 p-2 rounded-lg ${
-          isCompleted ? "bg-green-900/50" : "bg-gray-700"
+          isCompleted ? "bg-green-900/50 opacity-60" : TYPE_COLORS[step.type]
         }`}
       >
-        <Icon className={`h-5 w-5 ${isCompleted ? "text-green-400" : "text-gray-400"}`} />
+        <Icon className="h-5 w-5 text-white" />
       </div>
 
       {/* Content */}

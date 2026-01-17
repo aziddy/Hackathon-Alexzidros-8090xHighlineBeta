@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Issue, IssueStatus, KanbanColumn as KanbanColumnType } from "@/types";
-import { KanbanColumn } from "./kanban-column";
+import { Issue, IssueStatus } from "@/types";
+import { IssueListSection } from "./issue-list-section";
 import { IssueDetailModal } from "@/components/issues/issue-detail-modal";
 
 interface KanbanBoardProps {
@@ -10,11 +10,11 @@ interface KanbanBoardProps {
   onRefresh?: () => void;
 }
 
-const columns: { id: IssueStatus; title: string }[] = [
-  { id: "TODO", title: "To Do" },
-  { id: "IN_PROGRESS", title: "In Progress" },
-  { id: "IN_REVIEW", title: "In Review" },
-  { id: "DONE", title: "Done" },
+const sections: { id: IssueStatus; title: string; defaultOpen: boolean }[] = [
+  { id: "TODO", title: "To Do", defaultOpen: true },
+  { id: "IN_PROGRESS", title: "In Progress", defaultOpen: true },
+  { id: "IN_REVIEW", title: "In Review", defaultOpen: true },
+  { id: "DONE", title: "Done", defaultOpen: false },
 ];
 
 export function KanbanBoard({ issues, onRefresh }: KanbanBoardProps) {
@@ -32,14 +32,15 @@ export function KanbanBoard({ issues, onRefresh }: KanbanBoardProps) {
 
   return (
     <>
-      <div className="flex gap-4 p-6 overflow-x-auto min-h-[calc(100vh-4rem)]">
-        {columns.map((column) => (
-          <KanbanColumn
-            key={column.id}
-            id={column.id}
-            title={column.title}
-            issues={getIssuesByStatus(column.id)}
+      <div className="flex flex-col gap-4 p-6 overflow-y-auto min-h-[calc(100vh-4rem)]">
+        {sections.map((section) => (
+          <IssueListSection
+            key={section.id}
+            status={section.id}
+            title={section.title}
+            issues={getIssuesByStatus(section.id)}
             onIssueClick={setSelectedIssue}
+            defaultOpen={section.defaultOpen}
           />
         ))}
       </div>

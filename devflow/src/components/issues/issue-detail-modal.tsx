@@ -219,7 +219,7 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
         </div>
 
         {/* Two Column Layout */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 overflow-hidden">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[30%_70%] gap-6 p-6 overflow-hidden">
           {/* Left Column: Issue Details */}
           <div className="flex flex-col gap-4 overflow-y-auto pr-2">
             {/* Progress Section */}

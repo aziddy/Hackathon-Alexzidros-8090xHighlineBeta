@@ -107,17 +107,18 @@ model Issue {
 }
 
 model AtomicStep {
-  id          String     @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   description String?
   type        StepType
+  checkMethod CheckMethod @default(MCP_OR_MANUAL)
   order       Int
-  status      StepStatus @default(PENDING)
+  status      StepStatus  @default(PENDING)
   completedAt DateTime?
   verifiedVia String? // "github_api", "manual", "mcp"
   metadata    String? // JSON for additional data
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   issueId String
   issue   Issue  @relation(fields: [issueId], references: [id], onDelete: Cascade)
@@ -154,4 +155,12 @@ enum StepStatus {
   COMPLETED
   BLOCKED
   SKIPPED
+}
+
+enum CheckMethod {
+  MCP_OR_MANUAL // Verified via IDE or manual confirmation
+  MCP           // Only verifiable via IDE
+  MANUAL        // Only manual confirmation
+  MCP_OR_API    // Via IDE or GitHub API
+  API           // Only GitHub API
 }

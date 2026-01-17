@@ -57,12 +57,12 @@ Report that a development step is complete or failed.
 
 **Parameters:**
 - `issueNumber` (number): The GitHub issue number
-- `stepType` (string): The type of step (CODE, TEST, RUN_TESTS, COMMIT, CREATE_PR, etc.)
+- `stepNumber` (number): The step number (1, 2, 3, etc.) - use `get_issue_steps` to see available steps
 - `status` (string): "completed" or "failed"
 - `details` (string, optional): Additional details
 
 **Example usage in your IDE:**
-> "Mark the RUN_TESTS step as completed for issue #42 with details 'All 15 tests passed'"
+> "Mark step 3 as completed for issue #42 with details 'All 15 tests passed'"
 
 ### `get_issue_steps`
 
@@ -81,11 +81,21 @@ List all issues currently in progress.
 **Example usage:**
 > "Show me my active issues"
 
+### `get_issue_details`
+
+Get detailed information about a specific issue including title, progress, description, and labels.
+
+**Parameters:**
+- `issueNumber` (number): The GitHub issue number
+
+**Example usage:**
+> "Get details for issue #42"
+
 ## Usage Example
 
 When working on issue #42, you can use the MCP tools like this:
 
 1. Start working: "Get the steps for issue #42"
-2. After writing code: "Report CODE step completed for issue #42"
-3. After running tests: "Report RUN_TESTS completed for #42 with details '42 tests passed'"
+2. After writing code: "Report step 2 completed for issue #42"
+3. After running tests: "Report step 4 completed for #42 with details '42 tests passed'"
 4. Check progress: "Get steps for issue #42"

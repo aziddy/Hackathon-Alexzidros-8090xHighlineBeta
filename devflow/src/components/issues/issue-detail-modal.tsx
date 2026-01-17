@@ -136,21 +136,48 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
     }
   };
 
-  const handleCheckStatus = async (stepId: string) => {
+  type CheckAction = "api_check" | "manual_confirm" | "mcp_info";
+
+  const handleCheckStatus = async (stepId: string, action: CheckAction) => {
     try {
-      const response = await fetch(`/api/issues/${issue?.id}/check-status`, {
+      const response = await fetch(`/api/issues/${issue?.id}/steps/${stepId}/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stepId }),
+        body: JSON.stringify({ action }),
       });
 
       if (!response.ok) throw new Error("Failed to check status");
 
       const data = await response.json();
 
+      if (action === "mcp_info") {
+        // MCP info is handled by the dialog in AtomicStepItem
+        toast.info(data.message);
+        return;
+      }
+
       if (data.completed) {
-        handleStepUpdate(stepId, "COMPLETED");
-        toast.success(`Step verified: ${data.message}`);
+        // Update step to COMPLETED in local state
+        const updatedSteps = steps.map((s) =>
+          s.id === stepId
+            ? { ...s, status: "COMPLETED" as StepStatus, completedAt: new Date(), verifiedVia: action === "manual_confirm" ? "manual" : "github_api" }
+            : s
+        );
+        setSteps(updatedSteps);
+        calculateProgress(updatedSteps);
+
+        if (issue) {
+          const newProgress = Math.round(
+            (updatedSteps.filter((s) => s.status === "COMPLETED").length / updatedSteps.length) * 100
+          );
+          onUpdate({
+            ...issue,
+            atomicSteps: updatedSteps,
+            progressPercent: newProgress,
+          });
+        }
+
+        toast.success(data.message || "Step completed!");
       } else {
         toast.info(data.message || "Step not yet complete");
       }

@@ -87,3 +87,6 @@ tmp/
 temp/
 
 *.db
+
+# Temporary notes
+temp-note.md

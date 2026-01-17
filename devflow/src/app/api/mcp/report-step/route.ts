@@ -5,11 +5,11 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { issueNumber, stepType, status, details } = body;
+    const { issueNumber, stepNumber, status, details } = body;
 
-    if (!issueNumber || !stepType || !status) {
+    if (!issueNumber || !stepNumber || !status) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: issueNumber, stepNumber, and status are required" },
         { status: 400 }
       );
     }
@@ -17,7 +17,11 @@ export async function POST(request: NextRequest) {
     // Find the issue by GitHub issue number
     const issue = await prisma.issue.findFirst({
       where: { githubNumber: issueNumber },
-      include: { atomicSteps: true },
+      include: {
+        atomicSteps: {
+          orderBy: { order: "asc" }
+        }
+      },
     });
 
     if (!issue) {
@@ -27,11 +31,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find the step by type
-    const step = issue.atomicSteps.find((s) => s.type === stepType);
+    // Find the step by order (stepNumber is 1-indexed)
+    const step = issue.atomicSteps.find((s) => s.order === stepNumber);
     if (!step) {
       return NextResponse.json(
-        { error: `Step type ${stepType} not found for issue #${issueNumber}` },
+        { error: `Step #${stepNumber} not found for issue #${issueNumber}. Valid step numbers: 1-${issue.atomicSteps.length}` },
         { status: 404 }
       );
     }
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       progress,
-      message: `Step ${stepType} marked as ${status}`,
+      message: `Step #${stepNumber} marked as ${status}`,
     });
   } catch (error) {
     console.error("Error reporting step:", error);

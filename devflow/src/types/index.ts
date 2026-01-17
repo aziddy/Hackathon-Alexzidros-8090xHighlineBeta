@@ -17,17 +17,51 @@ export type StepType =
 
 export type StepStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "BLOCKED" | "SKIPPED";
 
+export type CheckMethod =
+  | "MCP_OR_MANUAL" // Verified via IDE or manual confirmation
+  | "MCP"           // Only verifiable via IDE
+  | "MANUAL"        // Only manual confirmation
+  | "MCP_OR_API"    // Via IDE or GitHub API
+  | "API";          // Only GitHub API
+
 export interface AtomicStep {
   id: string;
   name: string;
   description?: string;
   type: StepType;
+  checkMethod: CheckMethod;
   order: number;
   status: StepStatus;
   completedAt?: Date;
   verifiedVia?: string;
   metadata?: string;
 }
+
+// Default check method mapping for each step type
+export const DEFAULT_CHECK_METHOD: Record<StepType, CheckMethod> = {
+  CREATE_BRANCH: "MCP_OR_API",
+  CODE: "MCP_OR_MANUAL",
+  TEST: "MCP_OR_MANUAL",
+  RUN_TESTS: "MCP_OR_MANUAL",
+  COMMIT: "MCP_OR_MANUAL",
+  CREATE_PR: "API",
+  REQUEST_REVIEW: "API",
+  ADDRESS_COMMENTS: "MCP_OR_MANUAL",
+  GET_APPROVAL: "API",
+  MERGE: "API",
+  DEPLOY: "MCP_OR_API",
+  CLOSE_ISSUE: "API",
+  CUSTOM: "MANUAL",
+};
+
+// Human-readable labels for check methods
+export const CHECK_METHOD_LABELS: Record<CheckMethod, string> = {
+  MCP_OR_MANUAL: "IDE/Manual",
+  MCP: "IDE Only",
+  MANUAL: "Manual",
+  MCP_OR_API: "IDE/API",
+  API: "Auto-check",
+};
 
 export interface Issue {
   id: string;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateAtomicSteps } from "@/lib/cerebras";
+import { DEFAULT_CHECK_METHOD, StepType, CheckMethod } from "@/types";
 
 // POST /api/ai/generate-steps - Generate atomic steps using AI
 export async function POST(request: NextRequest) {
@@ -46,18 +47,23 @@ export async function POST(request: NextRequest) {
     });
 
     const createdSteps = await Promise.all(
-      generatedSteps.map((step) =>
-        prisma.atomicStep.create({
+      generatedSteps.map((step) => {
+        // Get checkMethod from AI response or fall back to default for the step type
+        const stepType = step.type as StepType;
+        const checkMethod = (step.checkMethod as CheckMethod) || DEFAULT_CHECK_METHOD[stepType] || "MCP_OR_MANUAL";
+
+        return prisma.atomicStep.create({
           data: {
             issueId,
             name: step.name,
             description: step.description,
-            type: step.type as any,
+            type: stepType as any,
+            checkMethod: checkMethod as any,
             order: step.order,
             status: "PENDING",
           },
-        })
-      )
+        });
+      })
     );
 
     // Update issue progress

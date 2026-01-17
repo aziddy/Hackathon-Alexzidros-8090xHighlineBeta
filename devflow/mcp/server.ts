@@ -28,7 +28,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "report_step_status",
         description:
-          "Report that a development step is complete or has failed. Call this after completing tasks like running tests, committing code, or creating a PR.",
+          "Report that a development step is complete or has failed. Call this after completing tasks like running tests, committing code, or creating a PR. Use get_issue_steps first to see the step numbers.",
         inputSchema: {
           type: "object",
           properties: {
@@ -36,23 +36,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "number",
               description: "The GitHub issue number (e.g., 123)",
             },
-            stepType: {
-              type: "string",
-              enum: [
-                "CREATE_BRANCH",
-                "CODE",
-                "TEST",
-                "RUN_TESTS",
-                "COMMIT",
-                "CREATE_PR",
-                "REQUEST_REVIEW",
-                "ADDRESS_COMMENTS",
-                "GET_APPROVAL",
-                "MERGE",
-                "DEPLOY",
-                "CLOSE_ISSUE",
-              ],
-              description: "The type of step being reported",
+            stepNumber: {
+              type: "number",
+              description: "The step number to update (1, 2, 3, etc.). Use get_issue_steps to see available steps.",
             },
             status: {
               type: "string",
@@ -65,7 +51,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 "Optional details about the completion (e.g., 'All 42 tests passed')",
             },
           },
-          required: ["issueNumber", "stepType", "status"],
+          required: ["issueNumber", "stepNumber", "status"],
         },
       },
       {
@@ -107,6 +93,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["issueNumber"],
         },
       },
+      {
+        name: "get_issue_details",
+        description:
+          "Get detailed information about a GitHub issue including its title, progress percentage, description, and labels.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            issueNumber: {
+              type: "number",
+              description: "The GitHub issue number",
+            },
+          },
+          required: ["issueNumber"],
+        },
+      },
     ],
   };
 });
@@ -118,9 +119,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case "report_step_status": {
-        const { issueNumber, stepType, status, details } = args as {
+        const { issueNumber, stepNumber, status, details } = args as {
           issueNumber: number;
-          stepType: string;
+          stepNumber: number;
           status: "completed" | "failed";
           details?: string;
         };
@@ -129,7 +130,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const response = await fetch(`${API_BASE}/api/mcp/report-step`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ issueNumber, stepType, status, details }),
+          body: JSON.stringify({ issueNumber, stepNumber, status, details }),
         });
 
         if (!response.ok) {
@@ -149,7 +150,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: "text",
-              text: `Step "${stepType}" marked as ${status} for issue #${issueNumber}. Progress: ${result.progress}%`,
+              text: `Step #${stepNumber} marked as ${status} for issue #${issueNumber}. Progress: ${result.progress}%`,
             },
           ],
         };
@@ -279,7 +280,7 @@ git push -u origin ${data.suggestedBranch}
 
 After creating the branch, use \`report_step_status\` with:
 - issueNumber: ${data.issueNumber}
-- stepType: "CREATE_BRANCH"
+- stepNumber: 1 (or the step number for "Create Branch" from get_issue_steps)
 - status: "completed"
 - details: "Created branch ${data.suggestedBranch}"
 
@@ -290,6 +291,45 @@ Would you like me to proceed with creating this branch?`;
             {
               type: "text",
               text: instructions,
+            },
+          ],
+        };
+      }
+
+      case "get_issue_details": {
+        const { issueNumber } = args as { issueNumber: number };
+
+        const response = await fetch(
+          `${API_BASE}/api/mcp/issue-details?issueNumber=${issueNumber}`
+        );
+
+        if (!response.ok) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Failed to get details for issue #${issueNumber}`,
+              },
+            ],
+          };
+        }
+
+        const data = await response.json();
+        const labelsText =
+          data.labels.length > 0 ? data.labels.join(", ") : "None";
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `## Issue #${data.issueNumber}: ${data.title}
+
+**Progress:** ${data.progress}%
+
+**Labels:** ${labelsText}
+
+**Description:**
+${data.description || "No description provided."}`,
             },
           ],
         };

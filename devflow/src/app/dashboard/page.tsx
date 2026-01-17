@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { ProjectSelector } from "@/components/projects/project-selector";
@@ -8,6 +9,14 @@ import { AddProjectModal } from "@/components/projects/add-project-modal";
 import { Project, Issue } from "@/types";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+
+// Wrapper component to read search params (needs to be inside Suspense)
+function KanbanBoardWrapper({ issues, onRefresh }: { issues: Issue[]; onRefresh: () => void }) {
+  const searchParams = useSearchParams();
+  const initialIssueId = searchParams.get("issue");
+
+  return <KanbanBoard issues={issues} onRefresh={onRefresh} initialIssueId={initialIssueId} />;
+}
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -137,7 +146,9 @@ export default function DashboardPage() {
       </div>
 
       {selectedProject ? (
-        <KanbanBoard issues={issues} onRefresh={handleRefresh} />
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>}>
+          <KanbanBoardWrapper issues={issues} onRefresh={handleRefresh} />
+        </Suspense>
       ) : (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">

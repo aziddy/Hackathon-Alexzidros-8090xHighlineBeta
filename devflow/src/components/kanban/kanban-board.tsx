@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Issue, IssueStatus } from "@/types";
 import { IssueListSection } from "./issue-list-section";
 import { IssueDetailModal } from "@/components/issues/issue-detail-modal";
@@ -8,6 +9,7 @@ import { IssueDetailModal } from "@/components/issues/issue-detail-modal";
 interface KanbanBoardProps {
   issues: Issue[];
   onRefresh?: () => void;
+  initialIssueId?: string | null;
 }
 
 const sections: { id: IssueStatus; title: string; defaultOpen: boolean }[] = [
@@ -17,12 +19,57 @@ const sections: { id: IssueStatus; title: string; defaultOpen: boolean }[] = [
   { id: "DONE", title: "Done", defaultOpen: false },
 ];
 
-export function KanbanBoard({ issues, onRefresh }: KanbanBoardProps) {
+export function KanbanBoard({ issues, onRefresh, initialIssueId }: KanbanBoardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+
+  // Initialize from URL on mount or when issues load
+  useEffect(() => {
+    if (initialIssueId && issues.length > 0 && !selectedIssue) {
+      const issue = issues.find(i => i.id === initialIssueId);
+      if (issue) {
+        setSelectedIssue(issue);
+      }
+    }
+  }, [initialIssueId, issues, selectedIssue]);
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const currentIssueId = searchParams.get("issue");
+
+    if (currentIssueId && !selectedIssue) {
+      const issue = issues.find(i => i.id === currentIssueId);
+      if (issue) setSelectedIssue(issue);
+    } else if (!currentIssueId && selectedIssue) {
+      setSelectedIssue(null);
+    }
+  }, [searchParams, issues, selectedIssue]);
 
   const getIssuesByStatus = (status: IssueStatus): Issue[] => {
     return issues.filter((issue) => issue.status === status);
   };
+
+  // Open issue and update URL
+  const handleIssueClick = useCallback((issue: Issue) => {
+    setSelectedIssue(issue);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("issue", issue.id);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [router, pathname, searchParams]);
+
+  // Close dialog and clear URL
+  const handleClose = useCallback(() => {
+    setSelectedIssue(null);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("issue");
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [router, pathname, searchParams]);
 
   const handleIssueUpdate = (updatedIssue: Issue) => {
     // Update would go through API, then refresh
@@ -39,7 +86,7 @@ export function KanbanBoard({ issues, onRefresh }: KanbanBoardProps) {
             status={section.id}
             title={section.title}
             issues={getIssuesByStatus(section.id)}
-            onIssueClick={setSelectedIssue}
+            onIssueClick={handleIssueClick}
             defaultOpen={section.defaultOpen}
           />
         ))}
@@ -48,7 +95,7 @@ export function KanbanBoard({ issues, onRefresh }: KanbanBoardProps) {
       <IssueDetailModal
         issue={selectedIssue}
         open={!!selectedIssue}
-        onClose={() => setSelectedIssue(null)}
+        onClose={handleClose}
         onUpdate={handleIssueUpdate}
       />
     </>

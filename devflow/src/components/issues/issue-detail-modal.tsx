@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { StepProgressBar } from "./step-progress-bar";
 import { AtomicStepList } from "./atomic-step-list";
+import { DeleteStepsDialog } from "./delete-steps-dialog";
 import { toast } from "sonner";
 import {
   ExternalLink,
@@ -22,6 +23,7 @@ import {
   Loader2,
   CheckCircle2,
   MessageSquare,
+  Trash2,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
@@ -39,6 +41,8 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
   const [steps, setSteps] = useState<AtomicStep[]>([]);
   const [progress, setProgress] = useState(0);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (issue) {
@@ -105,6 +109,35 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
       toast.error("Failed to generate steps. Please try again.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleDeleteAllSteps = async () => {
+    if (!issue) return;
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(`/api/issues/${issue.id}/steps`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete steps");
+
+      const data = await response.json();
+      setSteps([]);
+      setProgress(0);
+      setIsDeleteDialogOpen(false);
+      toast.success(`Deleted ${data.deleted} step${data.deleted !== 1 ? "s" : ""}`);
+
+      onUpdate({
+        ...issue,
+        atomicSteps: [],
+        progressPercent: 0,
+      });
+    } catch (error) {
+      toast.error("Failed to delete steps. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -347,9 +380,19 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
                   )}
                 </Button>
               ) : (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  {steps.filter((s) => s.status === "COMPLETED").length} / {steps.length} complete
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    {steps.filter((s) => s.status === "COMPLETED").length} / {steps.length} complete
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="text-gray-400 hover:text-red-400 hover:bg-red-950/30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               )}
             </div>
@@ -366,6 +409,14 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
         </div>
         </div>
       </DialogContent>
+
+      <DeleteStepsDialog
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteAllSteps}
+        stepCount={steps.length}
+        isLoading={isDeleting}
+      />
     </Dialog>
   );
 }

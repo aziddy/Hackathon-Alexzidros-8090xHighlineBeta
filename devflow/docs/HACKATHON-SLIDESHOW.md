@@ -8,11 +8,13 @@ flowchart LR
     MCP[MCP Server]
     IDE[Cursor + LLM]
     GH[GitHub]
+    CB[Cerebras]
 
     APP <-->|Tickets & Steps| MCP
     MCP <-->|Tools & Context| IDE
     IDE <-->|Code & PRs| GH
     GH <-->|Issues Sync| APP
+    CB -->|AI Processing| APP
 
     style APP fill:#6366f1,stroke:#4338ca,color:#fff
     style MCP fill:#f59e0b,stroke:#d97706,color:#fff

@@ -36,6 +36,51 @@ export async function GET(
   }
 }
 
+// DELETE /api/issues/[issueId]/steps - Delete all steps for an issue
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ issueId: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { issueId } = await params;
+
+    // Verify ownership
+    const issue = await prisma.issue.findFirst({
+      where: {
+        id: issueId,
+        project: { userId: session.user.id },
+      },
+    });
+
+    if (!issue) {
+      return NextResponse.json({ error: "Issue not found" }, { status: 404 });
+    }
+
+    // Delete all steps for this issue
+    const result = await prisma.atomicStep.deleteMany({
+      where: { issueId },
+    });
+
+    // Reset issue progress
+    await prisma.issue.update({
+      where: { id: issueId },
+      data: {
+        progressPercent: 0,
+      },
+    });
+
+    return NextResponse.json({ deleted: result.count });
+  } catch (error) {
+    console.error("Error deleting steps:", error);
+    return NextResponse.json({ error: "Failed to delete steps" }, { status: 500 });
+  }
+}
+
 // PATCH /api/issues/[issueId]/steps/[stepId] - Update a step's status
 export async function PATCH(
   request: NextRequest,

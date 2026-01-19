@@ -142,10 +142,14 @@ export type GitHubActionType =
   | "CREATE_ISSUE"
   | "ADD_COMMENT"
   | "CREATE_BRANCH"
+  | "CREATE_PR"
+  | "LINK_BRANCH"
   | "LIST_REPOS"
   | "LIST_ISSUES"
   | "LIST_PRS"
-  | "CHECK_WORKFLOW";
+  | "CHECK_WORKFLOW"
+  | "GET_LINKED_BRANCHES"
+  | "LIST_BRANCHES";
 
 export interface GitHubActionPayload {
   type: GitHubActionType;

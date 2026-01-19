@@ -25,7 +25,7 @@ export interface RepoContext {
  * Build the system prompt for the chat assistant with issue and steps context
  */
 export function buildChatSystemPrompt(
-  issue: { title: string; body?: string; labels?: string[] },
+  issue: { title: string; body?: string; labels?: string[]; githubNumber?: number },
   steps: AtomicStep[],
   progress: number,
   repoContext?: RepoContext
@@ -51,6 +51,7 @@ export function buildChatSystemPrompt(
   return `You are DevFlow Assistant, an AI helper for software development workflows. You are helping a developer work on a GitHub issue.
 
 ## Current Issue
+**GitHub Issue Number:** ${issue.githubNumber || "Unknown"}
 **Title:** ${issue.title}
 **Description:** ${issue.body || "No description provided"}
 **Labels:** ${issue.labels?.join(", ") || "None"}
@@ -88,6 +89,12 @@ Available GitHub actions:
 - CREATE_BRANCH: Create a new branch
   {"type":"CREATE_BRANCH","params":{"branchName":"feature/my-branch","fromBranch":"main"}}
 
+- CREATE_PR: Create a pull request
+  {"type":"CREATE_PR","params":{"title":"PR title","body":"Description","head":"feature-branch","base":"main"}}
+
+- LINK_BRANCH: Link an existing branch to an issue (shows in GitHub's Development section)
+  {"type":"LINK_BRANCH","params":{"branchName":"feature/123-fix-bug","issueNumber":123}}
+
 **Read actions (execute immediately):**
 - LIST_ISSUES: List repository issues
   {"type":"LIST_ISSUES","params":{"state":"open","limit":10}}
@@ -100,6 +107,12 @@ Available GitHub actions:
 
 - LIST_REPOS: List user's repositories
   {"type":"LIST_REPOS","params":{"limit":10}}
+
+- GET_LINKED_BRANCHES: Get branches linked to an issue
+  {"type":"GET_LINKED_BRANCHES","params":{"issueNumber":123}}
+
+- LIST_BRANCHES: List branches in the repository
+  {"type":"LIST_BRANCHES","params":{"limit":10}}
 
 ## Guidelines
 - Be concise but helpful

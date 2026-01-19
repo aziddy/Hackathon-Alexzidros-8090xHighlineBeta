@@ -149,6 +149,7 @@ export function ChatSidebar({
             labels: issue.labels,
             steps,
             progress,
+            githubNumber: issue.githubNumber,
           },
           chatHistory: messages.slice(-10),
         }),

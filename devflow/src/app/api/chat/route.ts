@@ -21,6 +21,7 @@ interface ChatRequestBody {
     labels?: string[];
     steps: AtomicStep[];
     progress: number;
+    githubNumber?: number;
   };
   chatHistory: ChatMessage[];
 }
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
         title: issueContext.title,
         body: issueContext.body,
         labels: issueContext.labels,
+        githubNumber: issueContext.githubNumber,
       },
       issueContext.steps,
       issueContext.progress,

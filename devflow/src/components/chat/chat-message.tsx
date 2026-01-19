@@ -29,7 +29,7 @@ export function ChatMessageComponent({ message }: ChatMessageComponentProps) {
       <div className={cn("flex-1 min-w-0 space-y-1 overflow-hidden", isUser && "flex flex-col items-end")}>
         <div
           className={cn(
-            "px-4 py-2 rounded-lg text-sm break-all",
+            "px-4 py-2 rounded-lg text-sm break-words",
             isUser
               ? "bg-blue-600 text-white"
               : "bg-gray-800 text-gray-200 border border-gray-700"

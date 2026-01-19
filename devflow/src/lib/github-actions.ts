@@ -6,6 +6,8 @@ export const CONFIRMATION_REQUIRED: GitHubActionType[] = [
   "CREATE_ISSUE",
   "ADD_COMMENT",
   "CREATE_BRANCH",
+  "CREATE_PR",
+  "LINK_BRANCH",
 ];
 
 // Actions that can be executed immediately (read-only)
@@ -14,6 +16,8 @@ export const READ_ONLY_ACTIONS: GitHubActionType[] = [
   "LIST_ISSUES",
   "LIST_PRS",
   "CHECK_WORKFLOW",
+  "GET_LINKED_BRANCHES",
+  "LIST_BRANCHES",
 ];
 
 export interface RepoContext {
@@ -109,6 +113,186 @@ export async function createBranch(
     return {
       success: false,
       message: "Failed to create branch",
+      error: String(error),
+    };
+  }
+}
+
+// Create a pull request
+export async function createPR(
+  octokit: Octokit,
+  context: RepoContext,
+  params: { title: string; body?: string; head: string; base?: string }
+): Promise<GitHubActionResult> {
+  try {
+    const { data } = await octokit.pulls.create({
+      owner: context.owner,
+      repo: context.repo,
+      title: params.title,
+      body: params.body,
+      head: params.head,
+      base: params.base || "main",
+    });
+    return {
+      success: true,
+      message: `Created PR #${data.number}: ${data.title}`,
+      data: { prNumber: data.number, url: data.html_url },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to create pull request",
+      error: String(error),
+    };
+  }
+}
+
+// Link a branch to an issue (makes it visible in GitHub's Development section)
+export async function linkBranch(
+  octokit: Octokit,
+  context: RepoContext,
+  params: { branchName: string; issueNumber: number }
+): Promise<GitHubActionResult> {
+  try {
+    // Step 1: Get issue node ID via GraphQL
+    const issueQuery = await octokit.graphql<{ repository: { issue: { id: string } } }>(`
+      query($owner: String!, $repo: String!, $number: Int!) {
+        repository(owner: $owner, name: $repo) {
+          issue(number: $number) {
+            id
+          }
+        }
+      }
+    `, {
+      owner: context.owner,
+      repo: context.repo,
+      number: params.issueNumber,
+    });
+
+    // Step 2: Get branch SHA
+    const { data: refData } = await octokit.git.getRef({
+      owner: context.owner,
+      repo: context.repo,
+      ref: `heads/${params.branchName}`,
+    });
+
+    // Step 3: Create linked branch via GraphQL mutation
+    const createLinkedBranchResult = await octokit.graphql(`
+      mutation($issueId: ID!, $oid: GitObjectID!, $name: String!) {
+        createLinkedBranch(input: {
+          issueId: $issueId
+          oid: $oid
+          name: $name
+        }) {
+          linkedBranch {
+            ref {
+              name
+            }
+          }
+        }
+      }
+    `, {
+      issueId: issueQuery.repository.issue.id,
+      oid: refData.object.sha,
+      name: params.branchName,
+    });
+
+    console.log(createLinkedBranchResult);
+
+    return {
+      success: true,
+      message: `Linked branch '${params.branchName}' to issue #${params.issueNumber}`,
+      data: { branchName: params.branchName, issueNumber: params.issueNumber },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to link branch to issue",
+      error: String(error),
+    };
+  }
+}
+
+// Get branches linked to an issue (from GitHub's Development section)
+export async function getLinkedBranches(
+  octokit: Octokit,
+  context: RepoContext,
+  params: { issueNumber: number }
+): Promise<GitHubActionResult> {
+  try {
+    const result = await octokit.graphql<{
+      repository: {
+        issue: {
+          linkedBranches: {
+            nodes: Array<{ ref: { name: string } }>;
+          };
+        };
+      };
+    }>(`
+      query($owner: String!, $repo: String!, $number: Int!) {
+        repository(owner: $owner, name: $repo) {
+          issue(number: $number) {
+            linkedBranches(first: 10) {
+              nodes {
+                ref {
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    `, {
+      owner: context.owner,
+      repo: context.repo,
+      number: params.issueNumber,
+    });
+
+    const branches = result.repository.issue.linkedBranches.nodes.map(
+      (node) => node.ref.name
+    );
+
+    return {
+      success: true,
+      message: branches.length > 0
+        ? `Found ${branches.length} linked branch(es): ${branches.join(", ")}`
+        : `No branches linked to issue #${params.issueNumber}`,
+      data: { branches, issueNumber: params.issueNumber },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to get linked branches",
+      error: String(error),
+    };
+  }
+}
+
+// List branches in the repository
+export async function listBranches(
+  octokit: Octokit,
+  context: RepoContext,
+  params: { limit?: number }
+): Promise<GitHubActionResult> {
+  try {
+    const { data } = await octokit.repos.listBranches({
+      owner: context.owner,
+      repo: context.repo,
+      per_page: params.limit || 10,
+    });
+    const branches = data.map((b) => ({
+      name: b.name,
+      protected: b.protected,
+    }));
+    return {
+      success: true,
+      message: `Found ${branches.length} branch(es): ${branches.map(b => b.name).join(", ")}`,
+      data: { branches },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Failed to list branches",
       error: String(error),
     };
   }
@@ -274,6 +458,18 @@ export async function executeGitHubAction(
         context,
         params as { branchName: string; fromBranch?: string }
       );
+    case "CREATE_PR":
+      return createPR(
+        octokit,
+        context,
+        params as { title: string; body?: string; head: string; base?: string }
+      );
+    case "LINK_BRANCH":
+      return linkBranch(
+        octokit,
+        context,
+        params as { branchName: string; issueNumber: number }
+      );
     case "LIST_REPOS":
       return listRepos(octokit, params as { limit?: number });
     case "LIST_ISSUES":
@@ -293,6 +489,18 @@ export async function executeGitHubAction(
         octokit,
         context,
         params as { branch?: string }
+      );
+    case "GET_LINKED_BRANCHES":
+      return getLinkedBranches(
+        octokit,
+        context,
+        params as { issueNumber: number }
+      );
+    case "LIST_BRANCHES":
+      return listBranches(
+        octokit,
+        context,
+        params as { limit?: number }
       );
     default:
       return {

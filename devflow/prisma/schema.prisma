@@ -135,6 +135,7 @@ enum IssueStatus {
 
 enum StepType {
   CREATE_BRANCH
+  PULL_BRANCH
   CODE
   TEST
   RUN_TESTS

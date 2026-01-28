@@ -86,14 +86,17 @@ Available GitHub actions:
 - ADD_COMMENT: Add comment to issue/PR
   {"type":"ADD_COMMENT","params":{"issueNumber":123,"body":"Comment text"}}
 
-- CREATE_BRANCH: Create a new branch
-  {"type":"CREATE_BRANCH","params":{"branchName":"feature/my-branch","fromBranch":"main"}}
+- CREATE_BRANCH: Create a new branch on GitHub (remote) and optionally link it to an issue
+  {"type":"CREATE_BRANCH","params":{"branchName":"feature/123-my-branch","fromBranch":"main","issueNumber":123}}
+  IMPORTANT: Always include issueNumber to link the branch to the current issue. Use the current issue number from context.
+  After creating, the user should run "git fetch && git checkout <branch>" locally.
 
 - CREATE_PR: Create a pull request
   {"type":"CREATE_PR","params":{"title":"PR title","body":"Description","head":"feature-branch","base":"main"}}
 
-- LINK_BRANCH: Link an existing branch to an issue (shows in GitHub's Development section)
+- LINK_BRANCH: Link an existing branch to an issue (only works for branches created via GitHub API)
   {"type":"LINK_BRANCH","params":{"branchName":"feature/123-fix-bug","issueNumber":123}}
+  Note: This cannot link branches created locally. Use CREATE_BRANCH with issueNumber instead.
 
 **Read actions (execute immediately):**
 - LIST_ISSUES: List repository issues

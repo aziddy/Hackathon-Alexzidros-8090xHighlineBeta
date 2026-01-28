@@ -85,7 +85,7 @@ Generate the atomic steps for completing this issue.`;
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
-      max_tokens: 1024,
+      max_tokens: 2024,
     });
 
     // Type assertion for Cerebras SDK response

@@ -56,12 +56,24 @@ export async function POST(request: NextRequest) {
       repo: project.githubRepoName,
     };
 
+    console.log(`[GitHub Action] Executing ${actionType}:`, {
+      projectId,
+      repoContext,
+      params,
+    });
+
     const result = await executeGitHubAction(
       octokit,
       repoContext,
       actionType,
       params
     );
+
+    console.log(`[GitHub Action] Result for ${actionType}:`, {
+      success: result.success,
+      message: result.message,
+      hasError: !!result.error,
+    });
 
     return NextResponse.json(result);
   } catch (error) {

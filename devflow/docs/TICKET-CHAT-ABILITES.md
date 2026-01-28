@@ -46,9 +46,14 @@
 |--------|-------------|
 | `CREATE_ISSUE` | Create new GitHub issues with title, body, labels |
 | `ADD_COMMENT` | Add comments to issues or pull requests |
-| `CREATE_BRANCH` | Create new branches from specified base branch |
+| `CREATE_BRANCH` | Create new branch on GitHub (remote) and link it to an issue. Accepts `issueNumber` param to automatically link. |
 | `CREATE_PR` | Create pull requests with title, body, head branch, base branch |
-| `LINK_BRANCH` | Link an existing branch to an issue (visible in GitHub Development section) |
+| `LINK_BRANCH` | Link an existing branch to an issue (only works for branches created via GitHub API) |
+
+### Workflow Notes
+- **CREATE_BRANCH** should always include `issueNumber` to link the branch to the issue
+- After creating a branch, user needs to run `git fetch && git checkout <branch>` locally (PULL_BRANCH step)
+- **LINK_BRANCH** cannot link branches created locally - use CREATE_BRANCH with `issueNumber` instead
 
 ---
 

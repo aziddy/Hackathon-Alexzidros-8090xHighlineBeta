@@ -67,6 +67,12 @@ export function ChatSidebar({
 
   const formatGitHubResult = (result: GitHubActionResult): string => {
     if (!result.success) {
+      // Log error details to console for debugging
+      console.error("[GitHub Action Failed]", {
+        message: result.message,
+        error: result.error,
+        timestamp: new Date().toISOString(),
+      });
       return `Error: ${result.message}`;
     }
 

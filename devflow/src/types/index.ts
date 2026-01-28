@@ -2,6 +2,7 @@ export type IssueStatus = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
 
 export type StepType =
   | "CREATE_BRANCH"
+  | "PULL_BRANCH"
   | "CODE"
   | "TEST"
   | "RUN_TESTS"
@@ -39,7 +40,8 @@ export interface AtomicStep {
 
 // Default check method mapping for each step type
 export const DEFAULT_CHECK_METHOD: Record<StepType, CheckMethod> = {
-  CREATE_BRANCH: "MCP_OR_API",
+  CREATE_BRANCH: "API",           // Always create via GitHub API to enable linking
+  PULL_BRANCH: "MCP_OR_MANUAL",   // Pull/checkout the remote branch locally
   CODE: "MCP_OR_MANUAL",
   TEST: "MCP_OR_MANUAL",
   RUN_TESTS: "MCP_OR_MANUAL",
@@ -101,6 +103,7 @@ export interface KanbanColumn {
 // Step type configuration
 export const STEP_CONFIG: Record<StepType, { label: string; icon: string; color: string }> = {
   CREATE_BRANCH: { label: "Create Branch", icon: "GitBranch", color: "teal" },
+  PULL_BRANCH: { label: "Pull Branch", icon: "Download", color: "cyan" },
   CODE: { label: "Write Code", icon: "Code", color: "blue" },
   TEST: { label: "Write Tests", icon: "FlaskConical", color: "purple" },
   RUN_TESTS: { label: "Run Tests", icon: "Play", color: "green" },

@@ -96,6 +96,7 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
       if (!response.ok) throw new Error("Failed to generate steps");
 
       const data = await response.json();
+      console.log("🎯 Received Atomic Steps from API:", data.steps);
       setSteps(data.steps);
       calculateProgress(data.steps);
       toast.success("Generated atomic steps with AI!");

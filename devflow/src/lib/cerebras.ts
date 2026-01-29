@@ -10,7 +10,6 @@ export interface GeneratedStep {
   name: string;
   description: string;
   type: string;
-  checkMethod?: string;
   order: number;
 }
 
@@ -28,7 +27,8 @@ export async function generateAtomicSteps(
   const systemPrompt = `You are a developer productivity assistant. Given a GitHub issue, generate a list of atomic steps needed to complete it.
 
 Each step should be one of these types:
-- CREATE_BRANCH: Create a feature branch for the issue (should be FIRST step for new features)
+- CREATE_BRANCH: Create a feature branch for the issue (MUST be FIRST step for most issues)
+- PULL_BRANCH: Pull/checkout an existing remote branch (Only if issue requires creating a branch)
 - CODE: Write or update code
 - TEST: Write unit tests
 - RUN_TESTS: Run test suite
@@ -41,28 +41,26 @@ Each step should be one of these types:
 - DEPLOY: Deploy to production (only for features that need deployment)
 - CLOSE_ISSUE: Close the issue
 
-Each step MUST have a checkMethod indicating how it can be verified:
-- MCP_OR_MANUAL: Verified via IDE (MCP) or manual confirmation (for CODE, TEST, RUN_TESTS, COMMIT, ADDRESS_COMMENTS)
-- MCP: Only verifiable via IDE (rarely used)
-- MANUAL: Only manual confirmation (for complex steps that can't be automated)
-- MCP_OR_API: Via IDE or GitHub API (for CREATE_BRANCH, DEPLOY)
-- API: Only verifiable via GitHub API (for CREATE_PR, REQUEST_REVIEW, GET_APPROVAL, MERGE, CLOSE_ISSUE)
+Each step MUST have a type from: CREATE_BRANCH, PULL_BRANCH, CODE, TEST, RUN_TESTS, COMMIT, CREATE_PR, REQUEST_REVIEW, ADDRESS_COMMENTS, GET_APPROVAL, MERGE, DEPLOY, CLOSE_ISSUE, CUSTOM.
+The checkMethod will be automatically assigned based on the step type.
 
 Guidelines:
-- Generate between 5-10 steps depending on complexity
-- For NEW features, always start with CREATE_BRANCH as the first step
-- For bug fixes on existing branches, you may skip CREATE_BRANCH
-- Bug fixes usually need fewer steps
-- Features need more comprehensive steps
-- Consider the labels to determine if tests are needed
+- Generate between 6-12 steps depending on complexity
+- **CRITICAL**: For MOST issues, step 1 MUST be CREATE_BRANCH
+  - Only skip CREATE_BRANCH if the issue explicitly states it's working on an existing branch
+  - Any code change, bug fix, or feature needs a branch
+  - If unsure, include CREATE_BRANCH as step 1
+- Use PULL_BRANCH only if the issue explicitly mentions an existing branch to pull
+- Always include TEST and RUN_TESTS steps unless the issue is documentation-only
 - Be specific in step descriptions
-- Order steps logically
-- ALWAYS include the checkMethod for each step
+- Order steps logically: CREATE_BRANCH → CODE → TEST → RUN_TESTS → COMMIT → CREATE_PR → REQUEST_REVIEW → GET_APPROVAL → MERGE → CLOSE_ISSUE
 
 Return ONLY a valid JSON object with this structure:
 {
   "steps": [
-    { "name": "Short step name", "description": "Detailed description", "type": "CREATE_BRANCH", "checkMethod": "MCP_OR_API", "order": 1 },
+    { "name": "Create feature branch", "description": "Create a new branch from main for this issue", "type": "CREATE_BRANCH", "order": 1 },
+    { "name": "Update color code", "description": "Change the Food & Dining color to a more customer-friendly shade", "type": "CODE", "order": 2 },
+    { "name": "Write unit tests", "description": "Add tests to verify the color change", "type": "TEST", "order": 3 },
     ...
   ]
 }`;
@@ -95,7 +93,11 @@ Generate the atomic steps for completing this issue.`;
       throw new Error("No response from Cerebras");
     }
 
+    // Log the raw LLM response for debugging
+    console.log("🤖 LLM Response for Atomic Steps Generation:", content);
+
     const parsed = JSON.parse(content);
+    console.log("✅ Parsed Atomic Steps:", parsed.steps);
     return parsed.steps || [];
   } catch (error) {
     console.error("Error generating steps:", error);
@@ -106,16 +108,16 @@ Generate the atomic steps for completing this issue.`;
 
 function getDefaultSteps(): GeneratedStep[] {
   return [
-    { name: "Create feature branch", description: "Create a new branch from main for this issue", type: "CREATE_BRANCH", checkMethod: "MCP_OR_API", order: 1 },
-    { name: "Implement the feature/fix", description: "Write the necessary code changes", type: "CODE", checkMethod: "MCP_OR_MANUAL", order: 2 },
-    { name: "Write unit tests", description: "Create tests to verify the changes", type: "TEST", checkMethod: "MCP_OR_MANUAL", order: 3 },
-    { name: "Run test suite", description: "Execute all tests to ensure nothing is broken", type: "RUN_TESTS", checkMethod: "MCP_OR_MANUAL", order: 4 },
-    { name: "Commit changes", description: "Commit the changes with a descriptive message", type: "COMMIT", checkMethod: "MCP_OR_MANUAL", order: 5 },
-    { name: "Create pull request", description: "Open a PR for code review", type: "CREATE_PR", checkMethod: "API", order: 6 },
-    { name: "Request review", description: "Ask teammates to review the PR", type: "REQUEST_REVIEW", checkMethod: "API", order: 7 },
-    { name: "Get approval", description: "Receive approval from reviewers", type: "GET_APPROVAL", checkMethod: "API", order: 8 },
-    { name: "Merge to main", description: "Merge the approved PR", type: "MERGE", checkMethod: "API", order: 9 },
-    { name: "Close issue", description: "Mark the issue as complete", type: "CLOSE_ISSUE", checkMethod: "API", order: 10 },
+    { name: "Create feature branch", description: "Create a new branch from main for this issue", type: "CREATE_BRANCH", order: 1 },
+    { name: "Implement the feature/fix", description: "Write the necessary code changes", type: "CODE", order: 2 },
+    { name: "Write unit tests", description: "Create tests to verify the changes", type: "TEST", order: 3 },
+    { name: "Run test suite", description: "Execute all tests to ensure nothing is broken", type: "RUN_TESTS", order: 4 },
+    { name: "Commit changes", description: "Commit the changes with a descriptive message", type: "COMMIT", order: 5 },
+    { name: "Create pull request", description: "Open a PR for code review", type: "CREATE_PR", order: 6 },
+    { name: "Request review", description: "Ask teammates to review the PR", type: "REQUEST_REVIEW", order: 7 },
+    { name: "Get approval", description: "Receive approval from reviewers", type: "GET_APPROVAL", order: 8 },
+    { name: "Merge to main", description: "Merge the approved PR", type: "MERGE", order: 9 },
+    { name: "Close issue", description: "Mark the issue as complete", type: "CLOSE_ISSUE", order: 10 },
   ];
 }
 

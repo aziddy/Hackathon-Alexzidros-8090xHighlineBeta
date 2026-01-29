@@ -120,7 +120,7 @@ Runs only the GitHub integration tests (skips any other test files).
 ### Run Only Cerebras API Tests
 
 ```bash
-npx vitest tests/integration/cerebras
+npm test -- cerebras.test.ts
 ```
 
 Runs only the Cerebras LLM integration tests.

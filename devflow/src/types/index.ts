@@ -80,6 +80,7 @@ export interface Issue {
   linkedPrUrl?: string;
   linkedPrState?: string;
   pipelineStatus?: string;
+  metadata?: string | null;
   atomicSteps: AtomicStep[];
   projectId: string;
 }
@@ -173,4 +174,17 @@ export interface GitHubAction {
   executed: boolean;
   result?: GitHubActionResult;
   pendingConfirmation?: boolean;
+}
+
+export interface BranchMetadata {
+  name: string;
+  createdAt: string;
+  linkedAt?: string;
+  baseBranch: string;
+  note?: string;
+}
+
+export interface IssueMetadata {
+  branch?: BranchMetadata;
+  // Extensible for future metadata
 }

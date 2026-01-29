@@ -62,15 +62,14 @@ const REAL_WORLD_ENCOUNTERED_ISSUES = {
       { type: 'CREATE_BRANCH', order: 1 },    // Create fix branch
       { type: 'PULL_BRANCH', order: 2 },     // Pull fix branch
       { type: 'CODE', order: 3 },             // Change Food & Dining color in UI
-      { type: 'TEST', order: 4 },             // Write/update UI tests
-      { type: 'RUN_TESTS', order: 5 },        // Run test suite
-      { type: 'COMMIT', order: 6 },           // Commit changes
-      { type: 'CREATE_PR', order: 7 },        // Create pull request
-      { type: 'REQUEST_REVIEW', order: 8 },   // Request review
-      { type: 'ADDRESS_COMMENTS', order: 9 }, // Address comments
-      { type: 'GET_APPROVAL', order: 10 },     // Get approval
-      { type: 'MERGE', order: 11 },            // Merge PR
-      { type: 'CLOSE_ISSUE', order: 12 },     // Close issue
+      { type: 'COMMIT', order: 4 },           // Commit changes
+      { type: 'CREATE_PR', order: 5 },        // Create pull request
+      { type: 'REQUEST_REVIEW', order: 6 },   // Request review
+      { type: 'ADDRESS_COMMENTS', order: 7 }, // Address comments
+      { type: 'GET_APPROVAL', order: 8 },     // Get approval
+      { type: 'MERGE', order: 9 },            // Merge PR
+      { type: 'DEPLOY', order: 10 },           // Deploy to production
+      { type: 'CLOSE_ISSUE', order: 11 },     // Close issue
     ],
   },
 }

@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   MessageSquare,
   Trash2,
+  GitBranch,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
@@ -142,6 +143,27 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
     }
   };
 
+  const handleClearBranchMetadata = async () => {
+    if (!issue) return;
+
+    try {
+      const response = await fetch(`/api/issues/${issue.id}/metadata/branch`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to clear branch metadata");
+
+      toast.success("Branch metadata cleared");
+
+      onUpdate({
+        ...issue,
+        metadata: null,
+      });
+    } catch (error) {
+      toast.error("Failed to clear branch metadata");
+    }
+  };
+
   const handleStepUpdate = async (stepId: string, status: StepStatus) => {
     const updatedSteps = steps.map((s) =>
       s.id === stepId
@@ -178,6 +200,8 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
 
   const handleCheckStatus = async (stepId: string, action: CheckAction) => {
     try {
+      console.log(`🔍 Initiating ${action} check for step:`, stepId);
+
       const response = await fetch(`/api/issues/${issue?.id}/steps/${stepId}/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,6 +211,7 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
       if (!response.ok) throw new Error("Failed to check status");
 
       const data = await response.json();
+      console.log(`✅ API Response for ${action}:`, data);
 
       if (action === "mcp_info") {
         // MCP info is handled by the dialog in AtomicStepItem
@@ -220,6 +245,7 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
         toast.info(data.message || "Step not yet complete");
       }
     } catch (error) {
+      console.error("❌ API Check Error:", error);
       toast.error("Failed to check status");
     }
   };
@@ -334,6 +360,53 @@ export function IssueDetailModal({ issue, open, onClose, onUpdate }: IssueDetail
                 )}
               </div>
             )}
+
+            {/* Branch Info */}
+            {(() => {
+              try {
+                const metadata = issue.metadata ? JSON.parse(issue.metadata) : null;
+                const branchInfo = metadata?.branch;
+
+                if (!branchInfo) return null;
+
+                return (
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-teal-950/30 border border-teal-800">
+                    <GitBranch className="h-5 w-5 text-teal-400 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-teal-400 font-medium font-mono text-sm truncate">
+                            {branchInfo.name}
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            From: {branchInfo.baseBranch || "main"}
+                            {branchInfo.createdAt && (
+                              <> • Created {new Date(branchInfo.createdAt).toLocaleDateString()}</>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleClearBranchMetadata()}
+                          className="text-gray-400 hover:text-red-400 hover:bg-red-950/30 ml-2 shrink-0"
+                          title="Clear branch metadata"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      {branchInfo.note && (
+                        <div className="text-xs text-yellow-400 mt-2 bg-yellow-950/20 p-2 rounded">
+                          {branchInfo.note}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              } catch {
+                return null;
+              }
+            })()}
 
             {/* Issue Description */}
             {issue.body && (
